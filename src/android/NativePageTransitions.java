@@ -673,8 +673,9 @@ public class NativePageTransitions extends CordovaPlugin {
     Bitmap bitmap = null;
     if (isCrosswalk) {
       try {
-        TextureView textureView = findCrosswalkTextureView((ViewGroup) getView());
-        bitmap = textureView.getBitmap();
+        //TextureView textureView = findCrosswalkTextureView((ViewGroup) getView());
+        //bitmap = textureView.getBitmap();
+        bitmap = getXwalkBitmap((ViewGroup) getView());
       } catch(Exception ignore) {
       }
     } else {
@@ -688,7 +689,33 @@ public class NativePageTransitions extends CordovaPlugin {
     }
     return bitmap;
   }
+    private Bitmap getXwalkBitmap(ViewGroup group) {
 
+        int childCount = group.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            View child = group.getChildAt(i);
+            String parentClassName = child.getParent().getClass().toString();
+            if (parentClassName.contains("XWalk") && child instanceof SurfaceView) {
+                SurfaceView surfaceView = ((SurfaceView) child);
+                Bitmap bitmap = Bitmap.createBitmap(surfaceView.getWidth(), surfaceView.getHeight(), Bitmap.Config.ARGB_8888);
+                Canvas c = new Canvas(bitmap);
+                surfaceView.draw(c);
+                return bitmap;
+            } else if (parentClassName.contains("XWalk") && child instanceof TextureView) {
+                Bitmap bitmap = ((TextureView) child).getBitmap();
+                if (bitmap != null) {
+                    return bitmap;
+                }
+            } else if (child instanceof ViewGroup) {
+                Bitmap bitmap = getXwalkBitmap((ViewGroup) child);
+                if (bitmap != null) {
+                    return bitmap;
+                }
+            }
+        }
+
+        return null;
+    }
   private TextureView findCrosswalkTextureView(ViewGroup group) {
     int childCount = group.getChildCount();
     for(int i=0;i<childCount;i++) {
